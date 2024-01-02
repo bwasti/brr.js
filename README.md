@@ -8,7 +8,7 @@ Tested on Safari Technology Preivew and Chrome Canary.
 
 Simple full example:
 
-```
+```javascript
 const brr = await import('./brr.js');
 const gpu = new brr.GPU();
 
@@ -48,7 +48,7 @@ await B.read((arr) => {
 
 Benchmarking:
 
-```
+```javascript
 // Benchmark the execution (gpu.block() only necessary for the benchmark)
 const t0 = performance.now();
 for (let i = 0; i < 10; ++i) {
