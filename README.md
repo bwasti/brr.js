@@ -21,7 +21,7 @@ const fn = await gpu.compile(
   const delta = ${ctx.threads};
   var i = global_invocation_index;
   for (; i < ${N}; i += delta) {
-    ${ctx.args[1]}[i] = ${ctx.args[0]}[i] * 2;
+    B[i] = A[i] * 2;
   }
 `);
 
