@@ -1,7 +1,7 @@
 ## `brr.js`
 
 It's early days, but I'm trying to make it easier to use WebGPU for compute in JavaScript.
-Tested on Safari Technology Preivew and Chrome Canary.
+Single file (`brr.js`) tested on Safari Technology Preivew and Chrome Canary.
 
 ## Usage
 
