@@ -62,8 +62,8 @@ console.log(`GPU: ${Math.round(t1 - t0) / 10}us per iter`);
 
 Feel free to submit PRs!  I'm trying to keep the basic functionality single file and relatively small.
 
-- [] Simple iterators (pointwise with indexing)
-- [] Library of common linear algebra operations (could be a different file)
-- [] Better exceptions/checks/errors
-- [] Improved performance for memory binding (skip copies etc)
-- [] Automatic recompilation (and caching mechanism) for changed compile-time arguments
+- [ ] Simple iterators (pointwise with indexing)
+- [ ] Library of common linear algebra operations (could be a different file)
+- [ ] Better exceptions/checks/errors
+- [ ] Improved performance for memory binding (skip copies etc)
+- [ ] Automatic recompilation (and caching mechanism) for changed compile-time arguments
