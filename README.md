@@ -18,9 +18,7 @@ const fn = await gpu.compile(
   [{name: 'A', type: 'vec4<f32>'},
    {name: 'B', type: 'vec4<f32>'}],
 (ctx) => `
-  const delta = ${ctx.threads};
-  var i = global_invocation_index;
-  for (; i < ${N}; i += delta) {
+  for (var i = global_invocation_index; i < ${N}; i += ${ctx.threads}) {
     B[i] = A[i] * 2;
   }
 `);
@@ -46,7 +44,7 @@ await B.read((arr) => {
 });
 ```
 
-Benchmarking:
+Benchmarking
 
 ```javascript
 // Benchmark the execution (gpu.block() only necessary for the benchmark)
@@ -59,3 +57,13 @@ const t1 = performance.now();
 
 console.log(`GPU: ${Math.round(t1 - t0) / 10}us per iter`);
 ```
+
+### TODO/Contributing
+
+Feel free to submit PRs!  I'm trying to keep the basic functionality single file and relatively small.
+
+- [] Simple iterators (pointwise with indexing)
+- [] Library of common linear algebra operations (could be a different file)
+- [] Better exceptions/checks/errors
+- [] Improved performance for memory binding (skip copies etc)
+- [] Automatic recompilation (and caching mechanism) for changed compile-time arguments
