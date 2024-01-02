@@ -1,7 +1,6 @@
 ## `brr.js`
 
-Trying to make it easier to use WebGPU for compute in JavaScript.
-Super early days.
+It's early days, but I'm trying to make it easier to use WebGPU for compute in JavaScript.
 Tested on Safari Technology Preivew and Chrome Canary.
 
 ## Usage
