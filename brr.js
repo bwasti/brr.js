@@ -3,7 +3,7 @@ function CHECK(str, fn) {
     if (!cond) {
       throw Error(str);
     }
-  }
+  };
   fn(check);
 }
 
@@ -19,26 +19,39 @@ export class Memory {
     const device = await this.gpu.device();
     // assume we want to write
     const size = this.numel * this.arrayType.BYTES_PER_ELEMENT;
-    return device.createBuffer({size, usage});
+    return device.createBuffer({ size, usage });
   }
 
   async init() {
     if (this.buffer !== null) return;
     // kinda CoW
-    this.buffer = await this.createBuffer(GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST);
+    this.buffer = await this.createBuffer(
+      GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+    );
   }
 
   async read_gpu() {
     await this.init();
     if (!(this.buffer.usage & GPUBufferUsage.MAP_READ)) {
-      if (this.buffer.usage == (GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)) {
-        throw Error(`Invalid buffer usage, did you call .read() on GPU outputs?`);
+      if (
+        this.buffer.usage ==
+        (GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
+      ) {
+        throw Error(
+          `Invalid buffer usage, did you call .read() on GPU outputs?`,
+        );
       }
       const device = await this.gpu.device();
       const usage = GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST;
-      const new_buffer = device.createBuffer({size:this.buffer.size, usage});
+      const new_buffer = device.createBuffer({ size: this.buffer.size, usage });
       const encoder = device.createCommandEncoder();
-      encoder.copyBufferToBuffer(this.buffer, 0, new_buffer, 0, this.buffer.size);
+      encoder.copyBufferToBuffer(
+        this.buffer,
+        0,
+        new_buffer,
+        0,
+        this.buffer.size,
+      );
       device.queue.submit([encoder.finish()]);
       this.buffer = new_buffer;
     }
@@ -55,10 +68,16 @@ export class Memory {
       } else if (this.buffer.usage & GPUBufferUsage.MAP_READ) {
         usage |= GPUBufferUsage.COPY_SRC;
       }
-      const new_buffer = device.createBuffer({size:this.buffer.size, usage});
+      const new_buffer = device.createBuffer({ size: this.buffer.size, usage });
       const encoder = device.createCommandEncoder();
       if (this.buffer.usage & GPUBufferUsage.MAP_WRITE) {
-        encoder.copyBufferToBuffer(this.buffer, 0, new_buffer, 0, this.buffer.size);
+        encoder.copyBufferToBuffer(
+          this.buffer,
+          0,
+          new_buffer,
+          0,
+          this.buffer.size,
+        );
         device.queue.submit([encoder.finish()]);
       }
       this.buffer = new_buffer;
@@ -69,7 +88,9 @@ export class Memory {
   async write_gpu() {
     await this.init();
     if (!(this.buffer.usage & GPUBufferUsage.MAP_WRITE)) {
-      const new_buffer = await this.createBuffer(GPUBufferUsage.MAP_WRITE | GPUBufferUsage.COPY_SRC);      
+      const new_buffer = await this.createBuffer(
+        GPUBufferUsage.MAP_WRITE | GPUBufferUsage.COPY_SRC,
+      );
       await this.read(async (arr) => {
         await new_buffer.mapAsync(GPUMapMode.WRITE);
         const new_arr = new this.arrayType(new_buffer.getMappedRange());
@@ -92,16 +113,16 @@ export class Memory {
   }
 
   async read(fn) {
-    const rg = await this.read_gpu()
+    const rg = await this.read_gpu();
     await rg.mapAsync(GPUMapMode.READ);
     return await this.exec_rw_callback(fn);
   }
   async write(fn) {
-    const wg = await this.write_gpu()
+    const wg = await this.write_gpu();
     await wg.mapAsync(GPUMapMode.WRITE);
     return await this.exec_rw_callback(fn);
   }
-};
+}
 
 export class GPUFunction extends Function {
   constructor(code, options, device) {
@@ -109,17 +130,17 @@ export class GPUFunction extends Function {
     this.code = code;
     this.options = options;
     this.device = device;
-    this.module = this.device.createShaderModule({code: this.code});
+    this.module = this.device.createShaderModule({ code: this.code });
     this.pipeline = this.device.createComputePipeline({
-      label: 'compute pipeline',
-      layout: 'auto',
+      label: "compute pipeline",
+      layout: "auto",
       compute: {
         module: this.module,
         entryPoint: this.options.name,
       },
     });
     return new Proxy(this, {
-      apply: (target, thisArg, args) => target.run(...args)
+      apply: (target, thisArg, args) => target.run(...args),
     });
   }
 
@@ -127,15 +148,17 @@ export class GPUFunction extends Function {
     let entries = [];
     for (let i = 0; i < args.length; ++i) {
       const buffer = await args[i].storage_gpu();
-      entries.push({ binding: i, resource: { buffer: buffer }});
+      entries.push({ binding: i, resource: { buffer: buffer } });
     }
 
     const bindGroup = this.device.createBindGroup({
       layout: this.pipeline.getBindGroupLayout(0),
-      entries: entries
+      entries: entries,
     });
-    const encoder = this.device.createCommandEncoder({ label: 'compute builtin encoder' });
-    const pass = encoder.beginComputePass({ label: 'compute builtin pass' });
+    const encoder = this.device.createCommandEncoder({
+      label: "compute builtin encoder",
+    });
+    const pass = encoder.beginComputePass({ label: "compute builtin pass" });
 
     pass.setPipeline(this.pipeline);
     pass.setBindGroup(0, bindGroup);
@@ -144,8 +167,7 @@ export class GPUFunction extends Function {
 
     this.device.queue.submit([encoder.finish()]);
   }
-
-};
+}
 
 export class GPU {
   constructor() {
@@ -171,7 +193,7 @@ export class GPU {
     this.adapter_ = await navigator.gpu?.requestAdapter();
     this.device_ = await this.adapter_?.requestDevice();
     if (!this.device_) {
-      const e = new Error('Browser doesn\'t support WebGPU');
+      const e = new Error("Browser doesn't support WebGPU");
       console.error(e);
       throw e;
     }
@@ -194,44 +216,47 @@ export class GPU {
       workgroup: [16],
       dispatch: [4],
       args: args,
-      name: 'func',
+      name: "func",
     };
     if (user_options) {
       Object.assign(options, user_options);
     }
 
-    CHECK('invalid workgroup, must be smaller than [256, 256, 64] and 256 total', (C) => {
-      const workgroup = options.workgroup;
-      C(workgroup.length < 4 && workgroup.length > 0);
-      C(workgroup.reduce((a, b) => a * b) <= 256);
-      if (workgroup.length === 1) {
-        C(workgroup[0] <= 256);
-      } else if (workgroup.length === 2) {
-        C(workgroup[0] <= 256);
-        C(workgroup[1] <= 256);
-      } else if (workgroup.length === 3) {
-        C(workgroup[0] <= 256);
-        C(workgroup[1] <= 256);
-        C(workgroup[2] <= 64);
-      }
-    });
+    CHECK(
+      "invalid workgroup, must be smaller than [256, 256, 64] and 256 total",
+      (C) => {
+        const workgroup = options.workgroup;
+        C(workgroup.length < 4 && workgroup.length > 0);
+        C(workgroup.reduce((a, b) => a * b) <= 256);
+        if (workgroup.length === 1) {
+          C(workgroup[0] <= 256);
+        } else if (workgroup.length === 2) {
+          C(workgroup[0] <= 256);
+          C(workgroup[1] <= 256);
+        } else if (workgroup.length === 3) {
+          C(workgroup[0] <= 256);
+          C(workgroup[1] <= 256);
+          C(workgroup[2] <= 64);
+        }
+      },
+    );
 
-    const prod = arr => arr.reduce((a, b) => a * b);
+    const prod = (arr) => arr.reduce((a, b) => a * b);
     const threads_per_workgroup = prod(options.workgroup);
     const num_workgroups = prod(options.dispatch);
     const num_threads = num_workgroups * threads_per_workgroup;
 
     const ctx = {
-threads: num_threads,
-         threads_per_workgroup: threads_per_workgroup,
-         num_workgroups: num_workgroups,
-         args: options.args.map((a)=>a.name),
+      threads: num_threads,
+      threads_per_workgroup: threads_per_workgroup,
+      num_workgroups: num_workgroups,
+      args: options.args.map((a) => a.name),
     };
     const code_stub = kernel_fn(ctx);
-    let bindings_stub = '';
-    for (let i = 0;i < options.args.length; ++i) {
+    let bindings_stub = "";
+    for (let i = 0; i < options.args.length; ++i) {
       const arg = options.args[i];
-      bindings_stub += `  @group(0) @binding(${i}) var<storage, read_write> ${arg.name}: array<${arg.type}>;\n`
+      bindings_stub += `  @group(0) @binding(${i}) var<storage, read_write> ${arg.name}: array<${arg.type}>;\n`;
     }
     const code = `${bindings_stub}
 
@@ -250,8 +275,4 @@ threads: num_threads,
   `;
     return new GPUFunction(code, options, await this.device());
   }
-
-};
-
-//export function pointwise() {
-//} 
+}
