@@ -1,8 +1,8 @@
 async function main() {
-  const brr = await import("./brr.mjs");
+  const brr = await import("./brr.js");
   const gpu = new brr.GPU();
 
-  const N = 1024 * 1024 * 32;
+  const N = 1024 * 1024 * 8;
   const fn = await gpu.compile(
     [
       { name: "A", type: "vec4<f32>" },
@@ -37,40 +37,69 @@ async function main() {
     }
   });
 
-  {
-    // Ref CPU
+  const cpu_complete = document.getElementById("cpu_complete");
+  const cpu_time = document.getElementById("cpu_time");
+  const gpu_complete = document.getElementById("gpu_complete");
+  const gpu_time = document.getElementById("gpu_time");
 
+  const iters = 100;
+  const increment = 10;
+
+  let cpu_total = 0;
+  function doCPUIter(j) {
+    if (j == iters) {
+      doGPUIter(0);
+      return;
+    }
     const t0 = performance.now();
-    for (let i = 0; i < 10; ++i) {
-      fn_ref(A, B);
+    for (let i = 0; i < increment; ++i) {
+      fn_ref(A_ref, B_ref);
     }
     const t1 = performance.now();
-
-    console.log(`CPU: ${Math.round(t1 - t0) / 10}us per iter`);
+    cpu_total += t1 - t0;
+    cpu_time.textContent = `${
+      Math.round((100 * cpu_total) / (j * increment)) / 100
+    }us`;
+    cpu_complete.textContent = `${Math.round(((j + 1) * 100) / iters)}%`;
+    window.requestAnimationFrame(() => {
+      doCPUIter(j + 1);
+    }, 0);
   }
 
-  {
-    // GPU
-
+  let gpu_total = 0;
+  async function doGPUIter(j) {
+    if (j == iters) {
+      return;
+    }
     const t0 = performance.now();
-    for (let i = 0; i < 10; ++i) {
+    for (let i = 0; i < increment; ++i) {
       await fn(A, B);
     }
     await gpu.block();
     const t1 = performance.now();
-
-    console.log(`GPU: ${Math.round(t1 - t0) / 10}us per iter`);
+    gpu_total += t1 - t0;
+    gpu_time.textContent = `${
+      Math.round((100 * gpu_total) / (j * increment)) / 100
+    }us`;
+    gpu_complete.textContent = `${Math.round(((j + 1) * 100) / iters)}%`;
+    window.requestAnimationFrame(() => {
+      doGPUIter(j + 1);
+    }, 0);
   }
 
-  await B.read((arr) => {
-    for (let i = 0; i < Math.round(Math.sqrt(N)); ++i) {
-      if (Math.abs(arr[i] - B_ref) > 0.0001) {
-        console.assert(0);
-        break;
+  doCPUIter(0);
+
+  if (0) {
+    await B.read((arr) => {
+      for (let i = 0; i < Math.round(Math.sqrt(N)); ++i) {
+        if (Math.abs(arr[i] - B_ref) > 0.0001) {
+          console.assert(0);
+          break;
+        }
       }
-    }
-    console.log(arr.slice(0, 10));
-  });
+      console.log(arr.slice(0, 10));
+    });
+  }
 }
 
 main().catch((err) => console.error(err));

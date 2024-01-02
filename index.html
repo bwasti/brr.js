@@ -1,6 +1,40 @@
 <html>
-  <head> </head>
+  <head>
+    <style>
+      html,
+      body {
+        font-family: monospace;
+      }
+      td {
+        max-width: 50px;
+        width: 50px;
+        overflow: hidden;
+      }
+      th {
+        text-align: left;
+      }
+      table {
+        position: absolute;
+        left: 50%;
+        transform: translate(-50%, 0%);
+      }
+    </style>
+  </head>
   <body>
+    <table>
+      <tr>
+        <th>CPU</th>
+        <th>GPU</th>
+      </tr>
+      <tr>
+        <td id="cpu_complete">0%</td>
+        <td id="gpu_complete">0%</td>
+      </tr>
+      <tr>
+        <td id="cpu_time"></td>
+        <td id="gpu_time"></td>
+      </tr>
+    </table>
     <script src="main.js"></script>
   </body>
 </html>
