@@ -38,7 +38,8 @@ await A.write((arr) => {
 
 // Run the function
 await fn(A, B);
-
+// Print out the underlying code
+console.log(fn.code);
 
 // Print the output (B)
 await B.read((arr) => {
