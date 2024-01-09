@@ -7,7 +7,7 @@ Single file (`brr.js`) tested on Safari Technology Preivew and Chrome Canary. [T
 
 ## Usage
 
-Simple full example:
+Simple pointwise example:
 
 ```javascript
 const brr = await import('./brr.js');
@@ -48,7 +48,7 @@ await B.read((arr) => {
 
 Simple matrix multiplication
 
-```
+```javascript
 async function mm(gpu) {
   const M = 32;
   const N = 32;
