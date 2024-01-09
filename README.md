@@ -1,8 +1,8 @@
 ## `brr.js`
-![cpuvgpu](https://github.com/bwasti/brr.js/assets/4842908/17e976c3-66f8-4dbf-83df-cbc0223bda4b)
+![cpuvgpu](https://github.com/bwasti/brr.js/assets/4842908/17e976c3-66f8-4dbf-83df-cbc0223bda4b) 
 
 It's early days, but I'm trying to make it easier to use WebGPU for compute in JavaScript.
-Single file (`brr.js`) tested on Safari Technology Preivew and Chrome Canary.
+Single file (`brr.js`) tested on Safari Technology Preivew and Chrome Canary. [Try it!](https://bwasti.github.io/brr.js/)
 
 
 ## Usage
