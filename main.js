@@ -1,3 +1,48 @@
+async function mm(gpu) {
+  const M = 32;
+  const N = 32;
+  const K = 32;
+  const A = gpu.alloc(Float32Array, M * K);
+  const B = gpu.alloc(Float32Array, K * N);
+  const C = gpu.alloc(Float32Array, M * N);
+  const sizes = gpu.alloc(Uint32Array, 3);
+  await A.write((arr) => { arr.fill(1); })
+  await B.write((arr) => { arr.fill(1); })
+  await C.write((arr) => { arr.fill(0); })
+  await sizes.write((arr) => {
+	arr[0] = M;
+	arr[1] = N;
+	arr[2] = K;
+  })
+  const fn = await gpu.compile(
+    [
+      { name: "A", type: "f32" },
+      { name: "B", type: "f32" },
+      { name: "C", type: "f32", output: true },
+      { name: "size", type: "u32" },
+    ],
+    (ctx) => `
+    let M = size[0];
+    let N = size[1];
+    let K = size[2];
+    for (var i = global_invocation_id.x; i < M;  i += num_workgroups.x * workgroup_size.x) {
+      for (var j = global_invocation_id.y; j < N;  j += num_workgroups.y * workgroup_size.y) {
+        for (var k : u32 = 0; k < K; k+=1) {
+          C[i * N + j] += A[i * K + k] * B[k * N + j];
+	}
+      }
+    }
+  `,
+    { workgroup: [4, 4], dispatch: [2, 2] },
+  );
+
+  await fn(A, B, C, sizes);
+
+  await C.read((arr) => {
+    console.log('matmul output', arr);
+  });
+}
+
 async function main() {
   const brr = await import("./brr.js");
   const gpu = new brr.GPU();
@@ -100,6 +145,9 @@ async function main() {
       console.log(arr.slice(0, 10));
     });
   }
+
+  // tests
+  await mm(gpu);
 }
 
 main().catch((err) => console.error(err));

@@ -38,7 +38,7 @@ export class Memory {
         (GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST)
       ) {
         throw Error(
-          `Invalid buffer usage, did you call .read() on GPU outputs?`,
+          `Invalid buffer usage, did you specify "output: true" for function outputs?`,
         );
       }
       const device = await this.gpu.device();
@@ -147,6 +147,9 @@ export class GPUFunction extends Function {
   async run(...args) {
     let entries = [];
     for (let i = 0; i < args.length; ++i) {
+      if (this.options.args[i].output) {
+        await args[i].read();
+      }
       const buffer = await args[i].storage_gpu();
       entries.push({ binding: i, resource: { buffer: buffer } });
     }
@@ -174,6 +177,7 @@ export class GPU {
     this.adapter_ = null;
     this.device_ = null;
     this.initialized = false;
+    this.supported_types_ = [Float32Array, Uint32Array];
   }
   async adapter() {
     await this.init();
@@ -201,7 +205,7 @@ export class GPU {
   }
 
   alloc(arrayType, numel) {
-    if (arrayType !== Float32Array) {
+    if (!this.supported_types_.includes(arrayType)) {
       throw Error(`Invalid Array type: '${arrayType}'`);
     }
     if (numel <= 0) {
@@ -268,6 +272,7 @@ export class GPU {
       @builtin(num_workgroups) num_workgroups: vec3<u32>
   ) {
     let workgroup_invocation_index: u32 = workgroup_id.x + workgroup_id.y * num_workgroups.x + workgroup_id.z * num_workgroups.x * num_workgroups.y;
+    let workgroup_size: vec2<u32> = vec2<u32>(${options.workgroup});
     let global_invocation_index: u32 = ${threads_per_workgroup} * workgroup_invocation_index + local_invocation_index;
 
     ${code_stub}
