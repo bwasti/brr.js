@@ -262,6 +262,7 @@ export class GPU {
       const arg = options.args[i];
       bindings_stub += `  @group(0) @binding(${i}) var<storage, read_write> ${arg.name}: array<${arg.type}>;\n`;
     }
+    const wg_size_type = options.workgroup.length > 1 ? `vec${options.workgroup.length}<u32>` : 'u32';
     const code = `${bindings_stub}
 
   @compute @workgroup_size(${options.workgroup}) fn ${options.name}(
@@ -272,7 +273,7 @@ export class GPU {
       @builtin(num_workgroups) num_workgroups: vec3<u32>
   ) {
     let workgroup_invocation_index: u32 = workgroup_id.x + workgroup_id.y * num_workgroups.x + workgroup_id.z * num_workgroups.x * num_workgroups.y;
-    let workgroup_size: vec2<u32> = vec2<u32>(${options.workgroup});
+    let workgroup_size: ${wg_size_type} = ${wg_size_type}(${options.workgroup});
     let global_invocation_index: u32 = ${threads_per_workgroup} * workgroup_invocation_index + local_invocation_index;
 
     ${code_stub}
